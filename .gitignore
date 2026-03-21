@@ -168,3 +168,4 @@ dist
 
 public/index.*
 dist/
+.vscode/

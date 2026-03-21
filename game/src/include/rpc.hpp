@@ -4,6 +4,10 @@
 
 EM_JS(void, rpcGetVariable, (const char* name, char* buffer, int bufferSize), {
     const key = UTF8ToString(name);
+    if (!window.gameEnv || !(key in window.gameEnv)) {
+        buffer[0] = 0;
+        return;
+    }
     const value = window.gameEnv[key] || "";
     stringToUTF8(value, buffer, bufferSize-1);
     buffer[bufferSize-1] = 0;
@@ -15,6 +19,7 @@ EM_JS(void, rpcSendCommand, (const char* command), {
 });
 
 EM_JS(int, rpcReceiveSync, (char* buffer, int bufferSize), {
+    if (!window.gwsq) return -1;
     if (window.gwsq.size == 0) return -1;
     const packet = window.popPacketFunc();
     if (packet === undefined || packet == "") return 0;
@@ -22,6 +27,10 @@ EM_JS(int, rpcReceiveSync, (char* buffer, int bufferSize), {
     buffer[bufferSize-1] = 0;
     if (bufferSize > packet.length) buffer[packet.length] = 0;
     return packet.length;
+});
+
+EM_JS(bool, rpcIsMobile, (), {
+    return /Android|Mac|iPod|iPhone|iPad/.test(navigator.platform) && !window.MSStream;
 });
 
 struct RPCFile {

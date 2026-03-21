@@ -12,6 +12,7 @@ struct HomeState {
         std::string state;
     } activity;
     char key[129];
+    bool isMobile;
     Font font;
     Texture copyIcon;
 };
@@ -29,6 +30,7 @@ HomeState * home_init() {
 
     state->activity.showing = false;
     rpcGetVariable("key", state->key, sizeof(state->key));
+    state->isMobile = rpcIsMobile();
     return state;
 }
 
@@ -75,23 +77,32 @@ void home_loop(HomeState* state) {
             DrawTextEx(state->font, noActivityTxt, (Vector2){(float)(sx/2 - MeasureTextEx(state->font, noActivityTxt, 30, 0).x/2), (float)(sy/2)}, 30, 0, (Color){200, 200, 200, 255});
         }
 
-        DrawRectangleRounded((Rectangle){(float)(sx - 210), 10, 200, 50}, 0.5f, 10, (Color){70, 70, 70, 255});
-        const char* copyKeyText = "Copy Key";
-        DrawTextEx(state->font, copyKeyText, (Vector2){(float)(sx - 110 - MeasureTextEx(state->font, copyKeyText, 20, 0).x/2), 25}, 20, 0, WHITE);
-        const int textureW = state->copyIcon.width, textureH = state->copyIcon.height;
-        DrawTexture(state->copyIcon, sx - 30 - textureW, 25 + (20 - textureH)/2, RED);
+        const bool isPip = CheckCollisionRecs((Rectangle){(float)(sx - 210), 10, 200, 50}, (Rectangle){(float)(sx/2 - 400), (float)(sy/2 - 100), 800, 200});
+        if (!isPip) {
+            DrawRectangleRounded((Rectangle){(float)(sx - 210), 10, 200, 50}, 0.5f, 10, (Color){70, 70, 70, 255});
+            const char* copyKeyText = "Copy Key";
+            DrawTextEx(state->font, copyKeyText, (Vector2){(float)(sx - 110 - MeasureTextEx(state->font, copyKeyText, 20, 0).x/2), 25}, 20, 0, WHITE);
+            const int textureW = state->copyIcon.width, textureH = state->copyIcon.height;
+            DrawTexture(state->copyIcon, sx - 30 - textureW, 25 + (20 - textureH)/2, RED);
+        }
 
         if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
             Vector2 mousePos = GetMousePosition();
             if (mousePos.x >= sx - 210 && mousePos.x <= sx - 10 && mousePos.y >= 10 && mousePos.y <= 60) {
-                SetClipboardText(state->key);
+                if (state->isMobile && copyTextShowTime <= 0) {
+                    char cmd[256];
+                    snprintf(cmd, sizeof(cmd), "url %s%s", KEY_COPIER_URL, state->key);
+                    rpcSendCommand(cmd);
+                } else {
+                    SetClipboardText(state->key);
+                }
                 copyTextShowTime = 2.0f;
             }
         }
 
         if (copyTextShowTime > 0) {
-            const char* copiedTxt = "Key Copied!";
-            DrawRectangleRounded((Rectangle){(float)(sx/2 - 100), (float)(sy - 80), 200, 50}, 0.5f, 10, (Color){70, 70, 70, 255});
+            const char* copiedTxt = state->isMobile ? "Open the link to get the key!" : "Key copied to clipboard!";
+            DrawRectangleRounded((Rectangle){(float)(sx/2 - 150), (float)(sy - 80), 300, 50}, 0.5f, 10, (Color){70, 70, 70, 255});
             DrawTextEx(state->font, copiedTxt, (Vector2){(float)(sx/2 - MeasureTextEx(state->font, copiedTxt, 20, 0).x/2), (float)(sy - 65)}, 20, 0, WHITE);
             copyTextShowTime -= GetFrameTime();
         }
