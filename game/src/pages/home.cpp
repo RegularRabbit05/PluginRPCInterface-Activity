@@ -31,6 +31,9 @@ HomeState * home_init() {
     state->activity.showing = false;
     rpcGetVariable("key", state->key, sizeof(state->key));
     state->isMobile = rpcIsMobile();
+
+    // For now always use the popup UI to copy the key
+    state->isMobile = true;
     return state;
 }
 
