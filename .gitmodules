@@ -1,0 +1,6 @@
+[submodule "game/raylib"]
+	path = game/raylib
+	url = https://github.com/raysan5/raylib
+[submodule "game/physfs"]
+	path = game/physfs
+	url = https://github.com/icculus/physfs
