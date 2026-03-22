@@ -11,7 +11,7 @@ struct HomeState {
         std::string description;
         std::string state;
     } activity;
-    char key[129];
+    char key[256];
     bool isMobile;
     Font font;
     Texture copyIcon;
